@@ -154,7 +154,7 @@ cdef class KDForest(object):
 
     cpdef cast_to_vectors(self, X):
         for i in range(len(X)):
-            X[i] = ln.vector(X[i])
+            X[i] = ln.vector(list(X[i]))
         return X
 
 
