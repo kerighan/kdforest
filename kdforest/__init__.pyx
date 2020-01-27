@@ -8,7 +8,7 @@ import random
 import dikt
 
 
-cdef class KDTree(object):
+cdef class KDForest(object):
     cdef int n_trees
     cdef int has_graph
     cdef public object tree
