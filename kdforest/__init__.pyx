@@ -97,6 +97,10 @@ cdef class KDForest(object):
         # start timer
         start_time = time.time()
 
+        # convert X to a list of `linearity.vectors`
+        if not isinstance(X[0], ln.vectors):
+            X = self.cast_to_vectors(X)
+
         # start subdivisions
         if self.n_trees == 1:
             subdivide(
@@ -147,6 +151,11 @@ cdef class KDForest(object):
             import json
             with open(filename, "w") as f:
                 json.dump(self.tree, f)
+
+    cpdef cast_to_vectors(self, X):
+        for i in range(len(X)):
+            X[i] = ln.vector(X[i])
+        return X
 
 
 cpdef subdivide(
