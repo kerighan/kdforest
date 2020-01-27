@@ -4,21 +4,21 @@ from setuptools import Extension
 
 
 extensions = [
-    Extension("linearity/*", ["linearity/*.pyx"]),
+    Extension("kdforest/*", ["kdforest/*.pyx"]),
 ]
 
-with open("README.md", "r") as f:
-    long_description = f.read()
+# with open("README.md", "r") as f:
+#     long_description = f.read()
 
 setuptools.setup(
     name="kdtrees",
-    version="0.0.2",
+    version="0.0.1",
     author="Maixent Chenebaux",
     author_email="max.chbx@gmail.com",
-    description="Linear algebra with minimal overhead",
-    long_description=long_description,
+    description="Forest of kd-trees with minimal index size",
+    # long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/kerighan/linearity",
+    url="https://github.com/kerighan/kdforest",
     packages=setuptools.find_packages(),
     include_package_data=True,
     ext_modules=cythonize(extensions),
