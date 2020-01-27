@@ -88,7 +88,7 @@ cdef class KDForest(object):
                 j += 1
         return neighbors[:k]
 
-    cpdef build_index(self, list X, list ids, int limit=10, int samples=500):
+    cpdef build_index(self, list X, list ids, int limit=10, int samples=100):
         cdef dict endpoints = {}
         cdef dict tree = {}
         cdef int dim = X[0].size
@@ -140,13 +140,16 @@ cdef class KDForest(object):
             for key, value in t[i].items():
                 self.tree[f"{i}_{key}"] = value
 
-    def save_index(self, filename, factor=250):
+    def save(self, filename, factor=250, compression=1):
         assert hasattr(self, "tree")
 
         if ".dikt" in filename:
             N = len(self.tree)
             chunks = N // factor
-            dikt.dump(self.tree, filename, chunks=chunks, compression=1)
+            dikt.dump(self.tree,
+                      filename,
+                      chunks=chunks,
+                      compression=compression)
         else:
             import json
             with open(filename, "w") as f:
