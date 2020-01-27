@@ -98,7 +98,7 @@ cdef class KDForest(object):
         start_time = time.time()
 
         # convert X to a list of `linearity.vectors`
-        if not isinstance(X[0], ln.vectors):
+        if not isinstance(X[0], ln.vector):
             X = self.cast_to_vectors(X)
 
         # start subdivisions
