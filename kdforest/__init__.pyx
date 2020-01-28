@@ -15,13 +15,13 @@ cdef class KDForest(object):
     cdef public object graph
     cdef public object hc
 
-    def __init__(self, filename=None, n_trees=1, graph=None):
+    def __init__(self, filename=None, n_trees=1, graph=None, cache=False):
         self.n_trees = n_trees
         self.has_graph = False
 
         if filename is not None:
             if ".dikt" in filename:
-                self.tree = dikt.load(filename)
+                self.tree = dikt.load(filename, cache=cache)
             else:
                 import json
                 self.tree = json.load(open(filename))
@@ -68,12 +68,9 @@ cdef class KDForest(object):
                         ids.add(n)
                         vector_from_id = ln.vector(vectors[str(n)])
                         distance = (vec - vector_from_id).norm()
-                        # distance = vec.distance_from(vector_from_id)
                         neighbors.append((n, distance))
             neighbors = sorted(neighbors, key=get_item)[:k]
             return neighbors
-
-
 
     cpdef get_neighbors_fromgraph(self, object neighbor, int k):
         cdef neighbors = [neighbor] + self.graph[neighbor]
@@ -136,15 +133,14 @@ cdef class KDForest(object):
             for key, value in t[i].items():
                 self.tree[f"{i}_{key}"] = value
 
-    def save(self, filename, factor=250, compression=1):
+    def save(self, filename, chunks=-1, items_per_chunk=None, compression=1):
         assert hasattr(self, "tree")
 
         if ".dikt" in filename:
-            N = len(self.tree)
-            chunks = N // factor
             dikt.dump(self.tree,
                       filename,
                       chunks=chunks,
+                      items_per_chunk=items_per_chunk,
                       compression=compression)
         else:
             import json
@@ -161,7 +157,7 @@ cpdef subdivide(
     list X, list ids, int dim,
     dict endpoints={}, dict tree={},
     str char="0", int limit=40,
-    int max_samples=20000
+    int max_samples=1000
 ):
     cdef list Y
     cdef list upper
