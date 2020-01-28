@@ -140,12 +140,10 @@ cdef class KDForest(object):
             for key, value in t[i].items():
                 self.tree[f"{i}_{key}"] = value
 
-    def save(self, filename, factor=250, compression=1):
+    def save(self, filename, chunks=-1, compression=1):
         assert hasattr(self, "tree")
 
         if ".dikt" in filename:
-            N = len(self.tree)
-            chunks = N // factor
             dikt.dump(self.tree,
                       filename,
                       chunks=chunks,
