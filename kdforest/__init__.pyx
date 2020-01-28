@@ -37,6 +37,7 @@ cdef class KDForest(object):
         cdef str char
         cdef int num_n
         cdef set avoid
+        cdef Py_ssize_t i
 
         # convert query
         if isinstance(v, list):

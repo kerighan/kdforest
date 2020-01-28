@@ -7,16 +7,12 @@ extensions = [
     Extension("kdforest/*", ["kdforest/*.pyx"]),
 ]
 
-# with open("README.md", "r") as f:
-#     long_description = f.read()
-
 setuptools.setup(
     name="kdtrees",
     version="0.0.1",
     author="Maixent Chenebaux",
     author_email="max.chbx@gmail.com",
     description="Forest of kd-trees with minimal index size",
-    # long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/kerighan/kdforest",
     packages=setuptools.find_packages(),
