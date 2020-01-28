@@ -30,7 +30,7 @@ cdef class KDForest(object):
                 self.graph = dikt.load(graph)
                 self.has_graph = True
 
-    cpdef query(self, v, k=10):
+    cpdef query(self, v, k=10, vectors=None):
         cdef dict count = {}
         cdef list neighbors
         cdef list added_neighbors
@@ -44,22 +44,8 @@ cdef class KDForest(object):
         elif not isinstance(v, ln.vector):
             vec = ln.vector(list(v))
 
-        # case for 1 tree
-        if self.n_trees == 1:
-            neighbors, char = query(vec, self.tree)
-
-            # complete query
-            num_n = len(neighbors)
-            avoid = {char}
-            char = char[:-2]
-            while num_n < k:
-                added_neighbors, avoid = populate(
-                    self.tree, char=char, avoid=avoid)
-                neighbors += added_neighbors
-                char = char[:-1]
-                num_n = len(neighbors)
-            return neighbors[:k]
-        else:
+        # if vectors is None, sort by number of trees
+        if vectors is None:
             for i in range(self.n_trees):
                 nn, char = query(vec, self.tree, char=f"{i}_0")
                 for n in nn:
@@ -67,13 +53,29 @@ cdef class KDForest(object):
                         count[n] += 1
                     else:
                         count[n] = 1
-            
+                        
             neighbors = sorted(count.items(), key=get_item, reverse=True)[:k]
             if self.has_graph:
                 neighbors = self.get_neighbors_from_graph(neighbors[0][0], k)
-        return neighbors
+            return neighbors
+        else:  # compute from distance
+            neighbors = []
+            ids = set()
+            for i in range(self.n_trees):
+                nn, char = query(vec, self.tree, char=f"{i}_0")
+                for n in nn:
+                    if n not in ids:
+                        ids.add(n)
+                        vector_from_id = ln.vector(vectors[str(n)])
+                        distance = (vec - vector_from_id).norm()
+                        # distance = vec.distance_from(vector_from_id)
+                        neighbors.append((n, distance))
+            neighbors = sorted(neighbors, key=get_item)[:k]
+            return neighbors
 
-    cpdef get_neighbors_from_graph(self, object neighbor, int k):
+
+
+    cpdef get_neighbors_fromgraph(self, object neighbor, int k):
         cdef neighbors = [neighbor] + self.graph[neighbor]
         j = 1
         if len(neighbors) < k:
@@ -102,24 +104,18 @@ cdef class KDForest(object):
             X = self.cast_to_vectors(X)
 
         # start subdivisions
-        if self.n_trees == 1:
+        from tqdm import tqdm
+        many_endpoints = []
+        many_trees = []
+        for i in tqdm(range(self.n_trees), desc="building trees"):
+            endpoints = {}
+            tree = {}
             subdivide(
                 X, ids, dim, endpoints, tree,
                 limit=limit, max_samples=samples)
-            self.merge(endpoints, tree)
-        else:
-            from tqdm import tqdm
-            many_endpoints = []
-            many_trees = []
-            for i in tqdm(range(self.n_trees), desc="building trees"):
-                endpoints = {}
-                tree = {}
-                subdivide(
-                    X, ids, dim, endpoints, tree,
-                    limit=limit, max_samples=samples)
-                many_endpoints.append(endpoints)
-                many_trees.append(tree)
-            self.merge_many(many_endpoints, many_trees)
+            many_endpoints.append(endpoints)
+            many_trees.append(tree)
+        self.merge_many(many_endpoints, many_trees)
 
         # stop timer
         elapsed_time = time.time() - start_time
@@ -140,10 +136,12 @@ cdef class KDForest(object):
             for key, value in t[i].items():
                 self.tree[f"{i}_{key}"] = value
 
-    def save(self, filename, chunks=-1, compression=1):
+    def save(self, filename, factor=250, compression=1):
         assert hasattr(self, "tree")
 
         if ".dikt" in filename:
+            N = len(self.tree)
+            chunks = N // factor
             dikt.dump(self.tree,
                       filename,
                       chunks=chunks,
@@ -196,25 +194,28 @@ cpdef subdivide(
                 lower.append(vector_)
                 lower_ids.append(vector_id)
 
-        # recursively subdivide space
-        subdivide(
-            upper,
-            upper_ids,
-            dim,
-            endpoints,
-            tree,
-            limit=limit,
-            char=char + "1",
-            max_samples=max_samples)
-        subdivide(
-            lower,
-            lower_ids,
-            dim,
-            endpoints,
-            tree,
-            limit=limit,
-            char=char + "0",
-            max_samples=max_samples)
+        if len(upper) == 0 or len(lower) == 0:
+            endpoints[char] = ids
+        else:
+            # recursively subdivide space
+            subdivide(
+                upper,
+                upper_ids,
+                dim,
+                endpoints,
+                tree,
+                limit=limit,
+                char=char + "1",
+                max_samples=max_samples)
+            subdivide(
+                lower,
+                lower_ids,
+                dim,
+                endpoints,
+                tree,
+                limit=limit,
+                char=char + "0",
+                max_samples=max_samples)
 
 
 cpdef query(vec, object tree, str char="0"):
