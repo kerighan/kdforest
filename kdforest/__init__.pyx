@@ -15,14 +15,14 @@ cdef class KDForest(object):
     cdef public object graph
     cdef public object hc
 
-    def __init__(self, filename=None, n_trees=1, graph=None, cache_keys=False, cache_chunks=False):
+    def __init__(self, filename=None, n_trees=1, graph=None, cache_values=False, cache_chunks=False):
         self.n_trees = n_trees
         self.has_graph = False
 
         if filename is not None:
             if ".dikt" in filename:
                 self.tree = dikt.load(filename,
-                                      cache_keys=cache_keys,
+                                      cache_values=cache_keys,
                                       cache_chunks=cache_chunks)
             else:
                 import json
