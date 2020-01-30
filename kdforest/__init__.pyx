@@ -46,6 +46,8 @@ cdef class KDForest(object):
             vec = ln.vector(v)
         elif not isinstance(v, ln.vector):
             vec = ln.vector(list(v))
+        else:
+            vec = v
 
         # if vectors is None, sort by number of trees
         if vectors is None:
