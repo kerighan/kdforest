@@ -177,7 +177,7 @@ cpdef subdivide(
         Y = random.sample(X, min(size, max_samples))
         idx, axis = ln.axis_of_max_variance(Y, dim)
         axis_median = axis.median()
-        axis_median = ln.approximate(axis_median)
+        # axis_median = ln.approximate(axis_median)
 
         # store information in tree
         tree[char] = [idx, axis_median]
