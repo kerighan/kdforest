@@ -22,7 +22,7 @@ cdef class KDForest(object):
         if filename is not None:
             if ".dikt" in filename:
                 self.tree = dikt.load(filename,
-                                      cache_values=cache_keys,
+                                      cache_values=cache_values,
                                       cache_chunks=cache_chunks)
             else:
                 import json
